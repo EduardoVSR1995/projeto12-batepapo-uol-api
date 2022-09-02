@@ -18,6 +18,7 @@ function registrarParticipante() {
   requisicao.then(entrarNaSala).catch(perguntarNome);
 }
 
+
 function entrarNaSala() {
   carregarMensagens();
   carregarParticipantes();

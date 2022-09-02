@@ -10,14 +10,14 @@ const mongoClient = new MongoClient(process.env.SERVER_URI)
 
 let db;
 
-mongoClient.connect().then(() => { db = mongoClient.db("participants"); });
+mongoClient.connect().then(() => { db = mongoClient.db("batepapoUou"); });
 
 const server = express();
 server.use(cors());
 server.use(express.json());
 
 function getArreyDB(value) {
-    const list1 = db.collection("messages").find().toArray();
+    const list1 = db.collection("messages").find(value).toArray();
     const list2 = db.collection("participants").find().toArray();
 
     return [list1, list2];
@@ -35,18 +35,22 @@ server.get("/participants", async (req, res) => {
 
 server.get("/messages", async (req, res) => {
     try{
-    const limit = Number(req.query.limit);
+        const limit = Number(req.query.limit);
 
-    const list = await getArreyDB()[0];
+        const list1 = await getArreyDB()[0];
+        
+        const list2 = list1.filter((value) => value.to === "Todos" || value.to === req.headers.user || value.from === req.headers.user )
 
-    return res.send(list.slice(-limit));
-}catch(error){
-    return res.sendStatus(401);
-}
+        return res.send(list2.slice(-limit));
+    }
+    catch(error){
+        return res.sendStatus(401);
+    }
 
 });
 
 server.post('/messages', (req, res) => {
+    console.log(req.body)
     try {
         const userSchema = joi.object({ to: joi.string().required(), text: joi.string().required(), type: joi.string().valid("message", "private_message").required() })
         const validation = userSchema.validate(req.body);
