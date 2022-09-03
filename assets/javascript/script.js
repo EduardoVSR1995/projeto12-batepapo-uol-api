@@ -1,6 +1,7 @@
 let mensagens = [];
 let participantes = [];
 let nome;
+let id;
 let destinatario = "Todos";
 let tipoMensagem = "message";
 let buscarMensagens = true;
@@ -19,7 +20,8 @@ function registrarParticipante() {
 }
 
 
-function entrarNaSala() {
+function entrarNaSala(value) {
+  id = value.data;
   carregarMensagens();
   carregarParticipantes();
   
@@ -33,6 +35,7 @@ function carregarMensagens() {
 
   const requisicao = axios.get("http://localhost:5000/messages?limit=50", {
     headers: {
+      id:id,
       User: nome
     }
   });
@@ -63,6 +66,7 @@ function agendarAtualizacaoDeStatus() {
 function atualizarStatus() {
   axios.post("http://localhost:5000/status", {}, {
     headers: {
+      id: id,
       User: nome
     }
   });

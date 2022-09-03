@@ -9,12 +9,38 @@ dotenv.config();
 const mongoClient = new MongoClient(process.env.SERVER_URI)
 
 let db;
+let time;
 
 mongoClient.connect().then(() => { db = mongoClient.db("batepapoUou"); });
 
 const server = express();
 server.use(cors());
 server.use(express.json());
+
+
+
+async function timeNowDel(){
+    time=Date.now();
+    try{
+        const list1 = await getArreyDB()[1];    
+        const list2 = list1.filter((value)=> Number(Date.now() - value.lastStatus) > 10000);
+        if(list2.length>0){
+            list2.map(async (value)=> {
+                await insertObj({
+                        from: value.name,
+                        to: "Todos",
+                        text: 'sai da sala...',
+                        type: 'status',
+                        time: dayjs().format('HH:mm:ss')
+                    });
+                await db.collection("participants").deleteOne(value);
+                return 
+            })
+            }; 
+    }catch(error){
+     console.log("ola")    
+    }
+}
 
 function getArreyDB(value) {
     const list1 = db.collection("messages").find(value).toArray();
@@ -38,9 +64,9 @@ server.get("/messages", async (req, res) => {
         const limit = Number(req.query.limit);
 
         const list1 = await getArreyDB()[0];
-        
-        const list2 = list1.filter((value) => value.to === "Todos" || value.to === req.headers.user || value.from === req.headers.user )
 
+        const list2 = list1.filter((value) => value.to==="Todos"  || value.to === req.headers.user || value.from === req.headers.user )
+        
         return res.send(list2.slice(-limit));
     }
     catch(error){
@@ -49,8 +75,18 @@ server.get("/messages", async (req, res) => {
 
 });
 
+server.post("/status", async (req,res)=>{
+    setInterval(timeNowDel, 15000);
+    try{
+        await db.collection("participants").updateOne({name:req.headers.user}, { $set: {lastStatus: Date.now() } } )
+        return res.sendStatus(200)
+    }catch(error){
+        console.log(req.headers.name,'ola')
+        return res.sendStatus(404)
+    }
+})
+
 server.post('/messages', (req, res) => {
-    console.log(req.body)
     try {
         const userSchema = joi.object({ to: joi.string().required(), text: joi.string().required(), type: joi.string().valid("message", "private_message").required() })
         const validation = userSchema.validate(req.body);
@@ -105,7 +141,9 @@ server.post('/participants', async (req, res) => {
 
         insertObj(objUser);
 
-        return res.sendStatus(201);
+        const  {_id}  = await db.collection("participants").findOne({name:name});
+
+        return res.send(_id).status(201);
 
     } catch (error) {
         return res.sendStatus(422);
