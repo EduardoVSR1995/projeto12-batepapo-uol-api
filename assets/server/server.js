@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import dayjs from 'dayjs';
 import joi from 'joi';
 import  { strict as assert }  from  "assert" ;
@@ -41,7 +41,7 @@ async function timeNowDel() {
             })
         };
     } catch (error) {
-        console.log("ola")
+        console.log(error)
     }
 }
 
@@ -157,5 +157,44 @@ server.post('/participants', async (req, res) => {
     }
 
 });
+
+server.delete("/messages/:id", async (req, res)=>{
+    try{
+        const userMeseng = await db.collection("messages").findOne({_id:new ObjectId(req.params.id), from:req.headers.user })
+        
+        if(userMeseng.length === 0){
+            return res.sendStatus(401);
+        }
+
+        await db.collection("messages").deleteOne({_id:new ObjectId(req.params.id)});
+        
+        return res.sendStatus(200);
+    }catch(error){
+        return res.sendStatus(404);
+    }
+})
+
+server.put("/messages/:id", async (req, res)=>{
+    try{
+        const userSchema = joi.object({ to: joi.string().required(), text: joi.string().required(), type: joi.string().valid("message", "private_message").required() })
+        const userMeseng = await db.collection("messages").findOne({_id:new ObjectId(req.params.id), from:req.headers.user })
+        const validation = userSchema.validate(req.body);
+        console.log(userMeseng)
+        if (validation.error) {
+            return res.sendStatus(422);
+        }
+
+        if(userMeseng.length === 0){
+            return res.sendStatus(401);
+        }
+
+        await db.collection("messages").updateOne({_id:new ObjectId(req.params.id)}, {$set:{ text: req.body.text,  time: dayjs().format('HH:mm:ss') } })
+       
+        return res.sendStatus(200);
+    }catch(error){
+        return res.sendStatus(404);
+    }
+
+})
 
 server.listen(5000)

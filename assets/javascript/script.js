@@ -267,7 +267,6 @@ function editarMensagem(elemento, id) {
   conteudoMensagem = elemento.parentNode.parentNode.querySelector(".conteudo-mensagem");
   oldHtml = conteudoMensagem.innerHTML;
   mensagem = mensagens.find(m => m._id === id);
-
   conteudoMensagem.innerHTML = `
     <input type="text" value="${mensagem.text}" autofocus placeholder="Digite o novo valor da mensagem" onkeydown="enviarMensagemEditada(event, '${id}')" class="mensagem-editada" />
   `;
