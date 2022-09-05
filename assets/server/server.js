@@ -6,7 +6,6 @@ import dayjs from 'dayjs';
 import joi from 'joi';
 import  { strict as assert }  from  "assert" ;
 import  { stripHtml }  from  "string-strip-html" ;
-import { clear } from 'console';
 
 dotenv.config();
 
